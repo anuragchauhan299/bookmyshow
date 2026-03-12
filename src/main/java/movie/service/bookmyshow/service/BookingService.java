@@ -1,110 +1,250 @@
 package movie.service.bookmyshow.service;
 
-import movie.service.bookmyshow.model.TheatreShow;
+import movie.service.bookmyshow.config.BookMyShowProperties;
+import movie.service.bookmyshow.entity.*;
+import movie.service.bookmyshow.exception.BookingException;
+import movie.service.bookmyshow.exception.SeatNotAvailableException;
+import movie.service.bookmyshow.exception.ShowNotFoundException;
+import movie.service.bookmyshow.repository.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class BookingService {
 
-    private static final Set<String> OFFER_CITIES = Set.of("Mumbai", "Delhi", "Bangalore");
+    private final ShowRepository showRepository;
+    private final SeatRepository seatRepository;
+    private final BookingRepository bookingRepository;
+    private final OfferRepository offerRepository;
+    private final BookMyShowProperties properties;
 
-    private final List<TheatreShow> allShows = new ArrayList<>();
+    @Transactional
+    public Booking createBooking(String showUuid, List<String> seatNumbers, String userId, String userEmail, String userPhone) {
+        log.info("Creating booking for show {} by user {}", showUuid, userId);
 
-    public BookingService() {
-        seedSampleShows();
+        Show show = showRepository.findByUuidWithLock(showUuid)
+                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + showUuid));
+
+        if (show.getStatus() != Show.ShowStatus.ACTIVE) {
+            throw new BookingException("Show is not active");
+        }
+
+        validateSeatLimit(seatNumbers);
+        validateUserBookingLimit(userId);
+
+        List<Seat> seats = seatRepository.findByShowUuidAndSeatNumbers(showUuid, new HashSet<>(seatNumbers));
+
+        if (seats.size() != seatNumbers.size()) {
+            throw new SeatNotAvailableException("Some seats do not exist");
+        }
+
+        for (Seat seat : seats) {
+            if (seat.getStatus() != Seat.SeatStatus.AVAILABLE) {
+                throw new SeatNotAvailableException("Seat " + seat.getSeatNumber() + " is not available");
+            }
+            if (seat.getHoldExpiry() != null && seat.getHoldExpiry().isAfter(LocalDateTime.now())) {
+                throw new SeatNotAvailableException("Seat " + seat.getSeatNumber() + " is currently held");
+            }
+        }
+
+        PricingDetails pricing = calculatePricing(show, seats);
+
+        Booking booking = Booking.builder()
+                .show(show)
+                .userId(userId)
+                .userEmail(userEmail)
+                .userPhone(userPhone)
+                .seats(seats)
+                .basePrice(pricing.basePrice())
+                .discountAmount(pricing.discountAmount())
+                .platformCommission(pricing.platformCommission())
+                .gstAmount(pricing.gstAmount())
+                .totalPrice(pricing.totalPrice())
+                .appliedOffers(pricing.appliedOffers())
+                .status(Booking.BookingStatus.PENDING)
+                .paymentStatus(Booking.PaymentStatus.PENDING)
+                .build();
+
+        for (Seat seat : seats) {
+            seat.setStatus(Seat.SeatStatus.BOOKED);
+            seat.setBooking(booking);
+        }
+
+        seatRepository.saveAll(seats);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        log.info("Booking created successfully: {}", savedBooking.getBookingReference());
+        return savedBooking;
     }
 
-    /**
-     * Browse theatres currently running the given movie in a city on a chosen date.
-     */
-    public List<TheatreShow> browseTheatres(String city, String movieTitle, LocalDate date) {
-        return allShows.stream()
-                .filter(show -> show.getCity().equalsIgnoreCase(city))
-                .filter(show -> show.getMovieTitle().equalsIgnoreCase(movieTitle))
-                .filter(show -> show.getShowDate().equals(date))
-                .collect(Collectors.toList());
+    @Transactional
+    public Booking confirmBooking(String bookingUuid, String paymentId, String paymentGateway) {
+        log.info("Confirming booking {} with payment {}", bookingUuid, paymentId);
+
+        Booking booking = bookingRepository.findByUuid(bookingUuid)
+                .orElseThrow(() -> new BookingException("Booking not found: " + bookingUuid));
+
+        if (booking.getStatus() != Booking.BookingStatus.PENDING) {
+            throw new BookingException("Booking is not in pending state");
+        }
+
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
+        booking.setPaymentStatus(Booking.PaymentStatus.CAPTURED);
+        booking.setPaymentId(paymentId);
+        booking.setPaymentGateway(paymentGateway);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        log.info("Booking confirmed: {}", booking.getBookingReference());
+        return bookingRepository.save(booking);
     }
 
-    /**
-     * Calculate total price applying:
-     * - 50% discount on the third ticket
-     * - 20% discount for afternoon shows
-     * - Offers are only for selected cities.
-     */
-    public BigDecimal calculateTotalPrice(TheatreShow show, int numberOfTickets) {
-        if (numberOfTickets <= 0) {
-            return BigDecimal.ZERO;
+    @Transactional
+    public Booking cancelBooking(String bookingUuid, String reason) {
+        log.info("Cancelling booking: {}", bookingUuid);
+
+        Booking booking = bookingRepository.findByUuid(bookingUuid)
+                .orElseThrow(() -> new BookingException("Booking not found: " + bookingUuid));
+
+        if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new BookingException("Booking is already cancelled");
         }
 
-        BigDecimal pricePerTicket = show.getTicketPrice();
-        BigDecimal baseAmount = pricePerTicket.multiply(BigDecimal.valueOf(numberOfTickets));
-
-        BigDecimal totalDiscount = BigDecimal.ZERO;
-
-        // Offers only in selected cities
-        boolean offerCity = OFFER_CITIES.contains(show.getCity());
-
-        if (offerCity && numberOfTickets >= 3) {
-            // 50% discount on the third ticket
-            BigDecimal thirdTicketDiscount = pricePerTicket.multiply(BigDecimal.valueOf(0.5));
-            totalDiscount = totalDiscount.add(thirdTicketDiscount);
+        if (booking.getStatus() == Booking.BookingStatus.CONFIRMED && booking.getPaymentStatus() == Booking.PaymentStatus.CAPTURED) {
+            BigDecimal refundAmount = calculateRefund(booking);
+            booking.setRefundAmount(refundAmount);
+            booking.setPaymentStatus(Booking.PaymentStatus.REFUNDED);
         }
 
-        // Afternoon show discount: 20% on the whole booking
-        if (isAfternoonShow(show.getShowTime())) {
-            BigDecimal afternoonDiscount = baseAmount.multiply(BigDecimal.valueOf(0.20));
-            totalDiscount = totalDiscount.add(afternoonDiscount);
+        for (Seat seat : booking.getSeats()) {
+            seat.setStatus(Seat.SeatStatus.AVAILABLE);
+            seat.setBooking(null);
+            seat.setHoldExpiry(null);
         }
 
-        BigDecimal finalAmount = baseAmount.subtract(totalDiscount);
-        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            finalAmount = BigDecimal.ZERO;
-        }
+        booking.setStatus(Booking.BookingStatus.CANCELLED);
+        booking.setCancelledAt(LocalDateTime.now());
+        booking.setCancellationReason(reason);
+        booking.setUpdatedAt(LocalDateTime.now());
 
-        return finalAmount.setScale(2, RoundingMode.HALF_UP);
+        seatRepository.saveAll(booking.getSeats());
+        log.info("Booking cancelled: {}", bookingUuid);
+        return bookingRepository.save(booking);
     }
 
-    private boolean isAfternoonShow(LocalTime time) {
-        // Example: afternoon between 12:00 (inclusive) and 17:59 (inclusive)
-        LocalTime start = LocalTime.of(12, 0);
-        LocalTime end = LocalTime.of(17, 59);
+    @Transactional
+    public void releaseSeats(String showUuid, List<String> seatNumbers) {
+        List<Seat> seats = seatRepository.findByShowUuidAndSeatNumbers(showUuid, new HashSet<>(seatNumbers));
+        for (Seat seat : seats) {
+            if (seat.getStatus() == Seat.SeatStatus.HELD) {
+                seat.setStatus(Seat.SeatStatus.AVAILABLE);
+                seat.setHoldExpiry(null);
+            }
+        }
+        seatRepository.saveAll(seats);
+    }
+
+    public List<Seat> getAvailableSeats(String showUuid) {
+        return seatRepository.findByShowUuidAndStatus(showUuid, Seat.SeatStatus.AVAILABLE);
+    }
+
+    public Booking getBooking(String uuid) {
+        return bookingRepository.findByUuid(uuid)
+                .orElseThrow(() -> new BookingException("Booking not found: " + uuid));
+    }
+
+    private void validateSeatLimit(List<String> seatNumbers) {
+        int maxSeats = properties.getBooking().getMaxSeatsPerBooking();
+        if (seatNumbers.size() > maxSeats) {
+            throw new BookingException("Maximum " + maxSeats + " seats allowed per booking");
+        }
+    }
+
+    private void validateUserBookingLimit(String userId) {
+        int maxBookings = properties.getBooking().getMaxBookingsPerUserPerDay();
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        int todayBookings = bookingRepository.countConfirmedBookingsByUserToday(userId, startOfDay);
+        if (todayBookings >= maxBookings) {
+            throw new BookingException("Maximum " + maxBookings + " bookings allowed per day");
+        }
+    }
+
+    private PricingDetails calculatePricing(Show show, List<Seat> seats) {
+        BigDecimal basePrice = show.getTicketPrice();
+        BigDecimal totalBase = basePrice.multiply(BigDecimal.valueOf(seats.size()));
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        List<String> appliedOffers = new ArrayList<>();
+
+        LocalDateTime now = LocalDateTime.now();
+        String city = show.getCity();
+        String theatreName = show.getTheatre().getName();
+
+        List<Offer> applicableOffers = offerRepository.findApplicableOffers(now, city, theatreName);
+
+        for (Offer offer : applicableOffers) {
+            if (offer.getType() == Offer.OfferType.THIRD_TICKET_DISCOUNT && seats.size() >= 3) {
+                int freeTicketCount = seats.size() / 3;
+                BigDecimal offerDiscount = basePrice.multiply(BigDecimal.valueOf(freeTicketCount))
+                        .multiply(BigDecimal.valueOf(properties.getOffers().getThirdTicketDiscountRate()));
+                discountAmount = discountAmount.add(offerDiscount);
+                appliedOffers.add("Third ticket discount applied");
+            }
+
+            if (offer.getType() == Offer.OfferType.AFTERNOON_SHOW && isAfternoonShow(show.getShowTime())) {
+                BigDecimal afternoonDiscount = totalBase.multiply(BigDecimal.valueOf(properties.getOffers().getAfternoonShowDiscountRate()));
+                discountAmount = discountAmount.add(afternoonDiscount);
+                appliedOffers.add("Afternoon show discount applied");
+            }
+        }
+
+        if (discountAmount.compareTo(BigDecimal.ZERO) < 0) {
+            discountAmount = BigDecimal.ZERO;
+        }
+
+        BigDecimal subtotal = totalBase.subtract(discountAmount);
+
+        BigDecimal platformCommission = subtotal.multiply(
+                BigDecimal.valueOf(properties.getMonetization().getPlatformCommissionPercent() / 100.0)
+        );
+
+        BigDecimal gstAmount = subtotal.multiply(
+                BigDecimal.valueOf(properties.getMonetization().getGstRate() / 100.0)
+        );
+
+        BigDecimal totalPrice = subtotal.add(gstAmount);
+
+        return new PricingDetails(totalBase, discountAmount, platformCommission, gstAmount, totalPrice, appliedOffers);
+    }
+
+    private boolean isAfternoonShow(java.time.LocalTime time) {
+        if (time == null) return false;
+        String startStr = properties.getOffers().getAfternoonStart();
+        String endStr = properties.getOffers().getAfternoonEnd();
+        java.time.LocalTime start = java.time.LocalTime.parse(startStr);
+        java.time.LocalTime end = java.time.LocalTime.parse(endStr);
         return !time.isBefore(start) && !time.isAfter(end);
     }
 
-    private void seedSampleShows() {
-        allShows.add(new TheatreShow(
-                "PVR Andheri",
-                "Mumbai",
-                "Inception",
-                LocalDate.now(),
-                LocalTime.of(14, 0),
-                BigDecimal.valueOf(300)
-        ));
-
-        allShows.add(new TheatreShow(
-                "INOX Nariman Point",
-                "Mumbai",
-                "Inception",
-                LocalDate.now(),
-                LocalTime.of(19, 30),
-                BigDecimal.valueOf(350)
-        ));
-
-        allShows.add(new TheatreShow(
-                "PVR Koramangala",
-                "Bangalore",
-                "Inception",
-                LocalDate.now(),
-                LocalTime.of(15, 0),
-                BigDecimal.valueOf(280)
-        ));
+    private BigDecimal calculateRefund(Booking booking) {
+        return booking.getTotalPrice();
     }
-}
 
+    private record PricingDetails(
+            BigDecimal basePrice,
+            BigDecimal discountAmount,
+            BigDecimal platformCommission,
+            BigDecimal gstAmount,
+            BigDecimal totalPrice,
+            List<String> appliedOffers
+    ) {}
+}

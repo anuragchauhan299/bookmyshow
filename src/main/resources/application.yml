@@ -1,0 +1,91 @@
+spring:
+  application:
+    name: bookmyshow
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:bookmyshow;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL}
+    driver-class-name: org.h2.Driver
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:20}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
+      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:600000}
+      max-lifetime: ${HIKARI_MAX_LIFETIME:1800000}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: true
+  h2:
+    console:
+      enabled: ${H2_CONSOLE_ENABLED:true}
+      path: ${H2_CONSOLE_PATH:/h2-console}
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+bookmyshow:
+  offers:
+    enabled-cities: ${OFFER_ENABLED_CITIES:Mumbai,Delhi,Bangalore}
+    enabled-theatres: ${OFFER_ENABLED_THEATRES:PVR Andheri,INOX Nariman Point,PVR Koramangala}
+    afternoon-start: ${OFFER_AFTERNOON_START:12:00}
+    afternoon-end: ${OFFER_AFTERNOON_END:17:59}
+    third-ticket-discount-rate: ${OFFER_THIRD_TICKET_DISCOUNT:0.50}
+    afternoon-show-discount-rate: ${OFFER_AFTERNOON_DISCOUNT:0.20}
+  booking:
+    seat-hold-duration-minutes: ${BOOKING_SEAT_HOLD_DURATION:5}
+    max-seats-per-booking: ${BOOKING_MAX_SEATS:10}
+    max-bookings-per-user-per-day: ${BOOKING_MAX_PER_USER_DAY:5}
+  payment:
+    gateway: ${PAYMENT_GATEWAY:stripe}
+    timeout-seconds: ${PAYMENT_TIMEOUT:30}
+    retry-attempts: ${PAYMENT_RETRY_ATTEMPTS:3}
+  theatre:
+    integration-timeout-ms: ${THEATRE_INTEGRATION_TIMEOUT:10000}
+    max-retry-attempts: ${THEATRE_MAX_RETRY:3}
+  security:
+    jwt-secret: ${JWT_SECRET:bookmyshow-secret-key-for-development-change-in-production}
+    jwt-expiration-ms: ${JWT_EXPIRATION:86400000}
+  scaling:
+    min-instances: ${SCALING_MIN_INSTANCES:2}
+    max-instances: ${SCALING_MAX_INSTANCES:10}
+    target-cpu-utilization: ${SCALING_TARGET_CPU:70}
+  localization:
+    default-locale: ${DEFAULT_LOCALE:en-US}
+    supported-locales: ${SUPPORTED_LOCALES:en-US,hi-IN,ta-IN,te-IN,mr-IN,kn-IN,ml-IN}
+  monetization:
+    platform-commission-percent: ${PLATFORM_COMMISSION:10}
+    gst-rate: ${GST_RATE:18}
+  compliance:
+    data-retention-days: ${DATA_RETENTION_DAYS:365}
+    enable-audit-logging: ${ENABLE_AUDIT_LOGGING:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  health:
+    db:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    movie.service.bookmyshow: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
