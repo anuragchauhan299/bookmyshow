@@ -17,28 +17,8 @@ import java.util.Set;
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
-    List<Seat> findByShowUuid(String showUuid);
-
     List<Seat> findByShowUuidAndStatus(String showUuid, Seat.SeatStatus status);
-
-    Optional<Seat> findByUuid(String uuid);
 
     @Query("SELECT s FROM Seat s WHERE s.show.uuid = :showUuid AND s.seatNumber IN :seatNumbers")
     List<Seat> findByShowUuidAndSeatNumbers(@Param("showUuid") String showUuid, @Param("seatNumbers") Set<String> seatNumbers);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM Seat s WHERE s.uuid = :uuid")
-    Optional<Seat> findByUuidWithLock(@Param("uuid") String uuid);
-
-    @Modifying
-    @Query("UPDATE Seat s SET s.status = :status, s.booking = NULL, s.holdExpiry = NULL WHERE s.holdExpiry < :now AND s.status = 'HELD'")
-    int releaseExpiredHolds(@Param("now") LocalDateTime now, @Param("status") Seat.SeatStatus status);
-
-    @Query("SELECT COUNT(s) FROM Seat s WHERE s.show.uuid = :showUuid AND s.status = 'AVAILABLE'")
-    long countAvailableSeats(@Param("showUuid") String showUuid);
-
-    @Query("SELECT s FROM Seat s WHERE s.show.uuid = :showUuid AND s.status = 'BOOKED'")
-    List<Seat> findBookedSeats(@Param("showUuid") String showUuid);
-
-    boolean existsByShowUuidAndSeatNumber(String showUuid, String seatNumber);
 }

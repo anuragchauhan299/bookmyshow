@@ -65,61 +65,7 @@ public class LocalizationService {
         return cityRepository.findByActive(true);
     }
 
-    public City getCityByNameAndCountry(String name, String country) {
-        return cityRepository.findByNameAndCountry(name, country)
-                .orElse(null);
-    }
 
-    public String getCityTimezone(String cityName, String country) {
-        City city = getCityByNameAndCountry(cityName, country);
-        if (city != null) {
-            return city.getTimezone();
-        }
-        return ZoneId.systemDefault().getId();
-    }
-
-    public String getCityCurrency(String cityName, String country) {
-        City city = getCityByNameAndCountry(cityName, country);
-        if (city != null) {
-            return city.getCurrencyCode();
-        }
-        return "INR";
-    }
-
-    public String getCityLocale(String cityName, String country) {
-        City city = getCityByNameAndCountry(cityName, country);
-        if (city != null) {
-            return city.getLocale();
-        }
-        return properties.getLocalization().getDefaultLocale();
-    }
-
-    public Set<String> getSupportedLocales() {
-        return Set.of(properties.getLocalization().getSupportedLocales().toArray(new String[0]));
-    }
-
-    public boolean isLocaleSupported(String locale) {
-        return getSupportedLocales().contains(locale);
-    }
-
-    public Locale resolveLocale(String requestedLocale) {
-        if (requestedLocale == null || requestedLocale.isEmpty()) {
-            return Locale.forLanguageTag(properties.getLocalization().getDefaultLocale());
-        }
-        
-        if (isLocaleSupported(requestedLocale)) {
-            return Locale.forLanguageTag(requestedLocale);
-        }
-        
-        String language = requestedLocale.split("-")[0];
-        for (String supported : properties.getLocalization().getSupportedLocales()) {
-            if (supported.startsWith(language)) {
-                return Locale.forLanguageTag(supported);
-            }
-        }
-        
-        return Locale.forLanguageTag(properties.getLocalization().getDefaultLocale());
-    }
 
     public List<Movie> getMoviesNowShowingInCity(String city, String locale) {
         List<Movie> movies = movieRepository.findNowShowingInCity(city);

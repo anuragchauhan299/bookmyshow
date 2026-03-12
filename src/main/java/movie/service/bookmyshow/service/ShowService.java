@@ -1,5 +1,6 @@
 package movie.service.bookmyshow.service;
 
+import movie.service.bookmyshow.constant.AppConstants;
 import movie.service.bookmyshow.entity.*;
 import movie.service.bookmyshow.exception.ShowNotFoundException;
 import movie.service.bookmyshow.repository.*;
@@ -37,7 +38,7 @@ public class ShowService {
         log.info("Updating show: {}", uuid);
         
         Show existing = showRepository.findByUuid(uuid)
-                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + uuid));
+                .orElseThrow(() -> new ShowNotFoundException(AppConstants.ErrorMessage.SHOW_NOT_FOUND + uuid));
         
         existing.setShowDate(updatedShow.getShowDate());
         existing.setShowTime(updatedShow.getShowTime());
@@ -45,22 +46,6 @@ public class ShowService {
         existing.setStatus(updatedShow.getStatus());
         
         return showRepository.save(existing);
-    }
-
-    @Transactional
-    public void deleteShow(String uuid) {
-        log.info("Deleting show: {}", uuid);
-        
-        Show show = showRepository.findByUuid(uuid)
-                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + uuid));
-        
-        show.setStatus(Show.ShowStatus.CANCELLED);
-        showRepository.save(show);
-    }
-
-    public Show getShow(String uuid) {
-        return showRepository.findByUuid(uuid)
-                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + uuid));
     }
 
     public List<Show> findShows(String movieTitle, String city, LocalDate date) {
@@ -74,20 +59,12 @@ public class ShowService {
         return showRepository.findAll();
     }
 
-    public List<Show> getShowsByTheatre(Long theatreId, LocalDate date) {
-        return showRepository.findByTheatreIdAndShowDate(theatreId, date);
-    }
-
-    public List<Show> getShowsByMovie(Long movieId, LocalDate date) {
-        return showRepository.findByMovieIdAndShowDate(movieId, date);
-    }
-
     @Transactional
     public void cancelShow(String uuid) {
         log.info("Cancelling show: {}", uuid);
         
         Show show = showRepository.findByUuid(uuid)
-                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + uuid));
+                .orElseThrow(() -> new ShowNotFoundException(AppConstants.ErrorMessage.SHOW_NOT_FOUND + uuid));
         
         show.setStatus(Show.ShowStatus.CANCELLED);
         showRepository.save(show);

@@ -1,5 +1,6 @@
 package movie.service.bookmyshow.service;
 
+import movie.service.bookmyshow.constant.AppConstants;
 import movie.service.bookmyshow.config.BookMyShowProperties;
 import movie.service.bookmyshow.entity.*;
 import movie.service.bookmyshow.exception.BookingException;
@@ -33,10 +34,10 @@ public class BookingService {
         log.info("Creating booking for show {} by user {}", showUuid, userId);
 
         Show show = showRepository.findByUuidWithLock(showUuid)
-                .orElseThrow(() -> new ShowNotFoundException("Show not found: " + showUuid));
+                .orElseThrow(() -> new ShowNotFoundException(AppConstants.ErrorMessage.SHOW_NOT_FOUND + showUuid));
 
         if (show.getStatus() != Show.ShowStatus.ACTIVE) {
-            throw new BookingException("Show is not active");
+            throw new BookingException(AppConstants.ErrorMessage.SHOW_NOT_ACTIVE);
         }
 
         validateSeatLimit(seatNumbers);
@@ -45,15 +46,15 @@ public class BookingService {
         List<Seat> seats = seatRepository.findByShowUuidAndSeatNumbers(showUuid, new HashSet<>(seatNumbers));
 
         if (seats.size() != seatNumbers.size()) {
-            throw new SeatNotAvailableException("Some seats do not exist");
+            throw new SeatNotAvailableException(AppConstants.ErrorMessage.SEAT_DOES_NOT_EXIST);
         }
 
         for (Seat seat : seats) {
             if (seat.getStatus() != Seat.SeatStatus.AVAILABLE) {
-                throw new SeatNotAvailableException("Seat " + seat.getSeatNumber() + " is not available");
+                throw new SeatNotAvailableException(String.format(AppConstants.ErrorMessage.SEAT_NOT_AVAILABLE, seat.getSeatNumber()));
             }
             if (seat.getHoldExpiry() != null && seat.getHoldExpiry().isAfter(LocalDateTime.now())) {
-                throw new SeatNotAvailableException("Seat " + seat.getSeatNumber() + " is currently held");
+                throw new SeatNotAvailableException(String.format(AppConstants.ErrorMessage.SEAT_CURRENTLY_HELD, seat.getSeatNumber()));
             }
         }
 
@@ -92,10 +93,10 @@ public class BookingService {
         log.info("Confirming booking {} with payment {}", bookingUuid, paymentId);
 
         Booking booking = bookingRepository.findByUuid(bookingUuid)
-                .orElseThrow(() -> new BookingException("Booking not found: " + bookingUuid));
+                .orElseThrow(() -> new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_FOUND + bookingUuid));
 
         if (booking.getStatus() != Booking.BookingStatus.PENDING) {
-            throw new BookingException("Booking is not in pending state");
+            throw new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_PENDING);
         }
 
         booking.setStatus(Booking.BookingStatus.CONFIRMED);
@@ -113,10 +114,10 @@ public class BookingService {
         log.info("Cancelling booking: {}", bookingUuid);
 
         Booking booking = bookingRepository.findByUuid(bookingUuid)
-                .orElseThrow(() -> new BookingException("Booking not found: " + bookingUuid));
+                .orElseThrow(() -> new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_FOUND + bookingUuid));
 
         if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
-            throw new BookingException("Booking is already cancelled");
+            throw new BookingException(AppConstants.ErrorMessage.BOOKING_ALREADY_CANCELLED);
         }
 
         if (booking.getStatus() == Booking.BookingStatus.CONFIRMED && booking.getPaymentStatus() == Booking.PaymentStatus.CAPTURED) {
@@ -141,31 +142,19 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
-    @Transactional
-    public void releaseSeats(String showUuid, List<String> seatNumbers) {
-        List<Seat> seats = seatRepository.findByShowUuidAndSeatNumbers(showUuid, new HashSet<>(seatNumbers));
-        for (Seat seat : seats) {
-            if (seat.getStatus() == Seat.SeatStatus.HELD) {
-                seat.setStatus(Seat.SeatStatus.AVAILABLE);
-                seat.setHoldExpiry(null);
-            }
-        }
-        seatRepository.saveAll(seats);
-    }
-
     public List<Seat> getAvailableSeats(String showUuid) {
         return seatRepository.findByShowUuidAndStatus(showUuid, Seat.SeatStatus.AVAILABLE);
     }
 
     public Booking getBooking(String uuid) {
         return bookingRepository.findByUuid(uuid)
-                .orElseThrow(() -> new BookingException("Booking not found: " + uuid));
+                .orElseThrow(() -> new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_FOUND + uuid));
     }
 
     private void validateSeatLimit(List<String> seatNumbers) {
         int maxSeats = properties.getBooking().getMaxSeatsPerBooking();
         if (seatNumbers.size() > maxSeats) {
-            throw new BookingException("Maximum " + maxSeats + " seats allowed per booking");
+            throw new BookingException(String.format(AppConstants.ErrorMessage.MAX_SEATS_EXCEEDED, maxSeats));
         }
     }
 
@@ -174,7 +163,7 @@ public class BookingService {
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         int todayBookings = bookingRepository.countConfirmedBookingsByUserToday(userId, startOfDay);
         if (todayBookings >= maxBookings) {
-            throw new BookingException("Maximum " + maxBookings + " bookings allowed per day");
+            throw new BookingException(String.format(AppConstants.ErrorMessage.MAX_BOOKINGS_EXCEEDED, maxBookings));
         }
     }
 
@@ -197,13 +186,13 @@ public class BookingService {
                 BigDecimal offerDiscount = basePrice.multiply(BigDecimal.valueOf(freeTicketCount))
                         .multiply(BigDecimal.valueOf(properties.getOffers().getThirdTicketDiscountRate()));
                 discountAmount = discountAmount.add(offerDiscount);
-                appliedOffers.add("Third ticket discount applied");
+                appliedOffers.add(AppConstants.Offer.THIRD_TICKET_DISCOUNT_APPLIED);
             }
 
             if (offer.getType() == Offer.OfferType.AFTERNOON_SHOW && isAfternoonShow(show.getShowTime())) {
                 BigDecimal afternoonDiscount = totalBase.multiply(BigDecimal.valueOf(properties.getOffers().getAfternoonShowDiscountRate()));
                 discountAmount = discountAmount.add(afternoonDiscount);
-                appliedOffers.add("Afternoon show discount applied");
+                appliedOffers.add(AppConstants.Offer.AFTERNOON_SHOW_DISCOUNT_APPLIED);
             }
         }
 

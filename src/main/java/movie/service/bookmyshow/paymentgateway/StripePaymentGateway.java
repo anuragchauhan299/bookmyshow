@@ -1,6 +1,7 @@
 package movie.service.bookmyshow.paymentgateway;
 
 import lombok.extern.slf4j.Slf4j;
+import movie.service.bookmyshow.constant.AppConstants;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -13,13 +14,13 @@ public class StripePaymentGateway implements PaymentGateway {
     public PaymentResult processPayment(PaymentRequest request) {
         log.info("Processing Stripe payment for: {}", request.getBookingReference());
 
-        String paymentId = "stripe_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String paymentId = AppConstants.Payment.ID_PREFIX_STRIPE + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
 
         return PaymentResult.builder()
                 .success(true)
                 .paymentId(paymentId)
-                .status("captured")
-                .message("Payment successful via Stripe")
+                .status(AppConstants.Payment.STATUS_CAPTURED)
+                .message(AppConstants.Payment.MESSAGE_PAYMENT_SUCCESS + "Stripe")
                 .gatewayResponse("{\"id\":\"" + paymentId + "\",\"status\":\"succeeded\"}")
                 .build();
     }
@@ -28,13 +29,13 @@ public class StripePaymentGateway implements PaymentGateway {
     public PaymentResult refundPayment(String paymentId, BigDecimal amount) {
         log.info("Processing Stripe refund for: {} amount: {}", paymentId, amount);
 
-        String refundId = "refund_" + UUID.randomUUID().toString().substring(0, 16);
+        String refundId = AppConstants.Payment.ID_PREFIX_REFUND + UUID.randomUUID().toString().substring(0, 16);
 
         return PaymentResult.builder()
                 .success(true)
                 .paymentId(refundId)
-                .status("refunded")
-                .message("Refund processed successfully via Stripe")
+                .status(AppConstants.Payment.STATUS_REFUNDED)
+                .message(AppConstants.Payment.MESSAGE_REFUND_SUCCESS + "Stripe")
                 .gatewayResponse("{\"id\":\"" + refundId + "\",\"status\":\"succeeded\"}")
                 .build();
     }
@@ -46,8 +47,8 @@ public class StripePaymentGateway implements PaymentGateway {
         return PaymentResult.builder()
                 .success(true)
                 .paymentId(paymentId)
-                .status("verified")
-                .message("Payment verified successfully")
+                .status(AppConstants.Payment.STATUS_VERIFIED)
+                .message(AppConstants.Payment.MESSAGE_VERIFIED_SUCCESS)
                 .gatewayResponse("{\"id\":\"" + paymentId + "\",\"status\":\"succeeded\"}")
                 .build();
     }

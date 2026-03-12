@@ -13,18 +13,12 @@ import java.util.Optional;
 @Repository
 public interface OfferRepository extends JpaRepository<Offer, Long> {
 
-    Optional<Offer> findByCode(String code);
+    Optional<Offer> findByUuid(String uuid);
 
-    List<Offer> findByIsActive(Boolean isActive);
-
-    @Query("SELECT o FROM Offer o WHERE o.isActive = true AND o.startDate <= :now AND o.endDate >= :now")
-    List<Offer> findActiveOffers(@Param("now") LocalDateTime now);
+    List<Offer> findByIsActiveTrue();
 
     @Query("SELECT o FROM Offer o WHERE o.isActive = true AND o.startDate <= :now AND o.endDate >= :now AND " +
            "(:city IS NULL OR :city MEMBER OF o.applicableCities) AND " +
            "(:theatre IS NULL OR :theatre MEMBER OF o.applicableTheatres)")
     List<Offer> findApplicableOffers(@Param("now") LocalDateTime now, @Param("city") String city, @Param("theatre") String theatre);
-
-    @Query("SELECT o FROM Offer o WHERE o.isActive = true AND o.type = :type AND o.startDate <= :now AND o.endDate >= :now")
-    List<Offer> findActiveOffersByType(@Param("type") Offer.OfferType type, @Param("now") LocalDateTime now);
 }

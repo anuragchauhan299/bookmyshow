@@ -14,9 +14,5 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
     List<AuditLog> findByUserId(String userId);
 
-    List<AuditLog> findByAction(String action);
-
     List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
-
-    List<AuditLog> findByCorrelationId(String correlationId);
 }

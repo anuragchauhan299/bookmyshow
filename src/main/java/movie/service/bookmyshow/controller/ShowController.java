@@ -1,7 +1,11 @@
 package movie.service.bookmyshow.controller;
 
 import movie.service.bookmyshow.dto.ShowDto;
+import movie.service.bookmyshow.entity.Movie;
 import movie.service.bookmyshow.entity.Show;
+import movie.service.bookmyshow.entity.Theatre;
+import movie.service.bookmyshow.repository.MovieRepository;
+import movie.service.bookmyshow.repository.TheatreRepository;
 import movie.service.bookmyshow.service.ShowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +21,8 @@ import java.util.List;
 public class ShowController {
 
     private final ShowService showService;
+    private final MovieRepository movieRepository;
+    private final TheatreRepository theatreRepository;
 
     @GetMapping
     public List<Show> getShows(@RequestParam(required = false) String movieTitle,
@@ -27,8 +33,22 @@ public class ShowController {
 
     @PostMapping
     public ResponseEntity<Show> createShow(@RequestBody ShowDto dto) {
-        Show show = showService.createShow(mapToShow(dto));
-        return ResponseEntity.status(HttpStatus.CREATED).body(show);
+        Movie movie = movieRepository.findById(dto.getMovieId())
+                .orElseThrow(() -> new IllegalArgumentException("Movie not found"));
+        Theatre theatre = theatreRepository.findById(dto.getTheatreId())
+                .orElseThrow(() -> new IllegalArgumentException("Theatre not found"));
+        
+        Show show = Show.builder()
+                .movie(movie)
+                .theatre(theatre)
+                .city(theatre.getCity())
+                .showDate(dto.getShowDate())
+                .showTime(dto.getShowTime())
+                .ticketPrice(dto.getTicketPrice())
+                .build();
+        
+        Show created = showService.createShow(show);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
@@ -39,7 +59,7 @@ public class ShowController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShow(@PathVariable String id) {
-        showService.deleteShow(id);
+        showService.cancelShow(id);
     }
 
     private Show mapToShow(ShowDto dto) {

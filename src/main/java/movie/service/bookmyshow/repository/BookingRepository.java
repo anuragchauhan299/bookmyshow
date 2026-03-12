@@ -15,16 +15,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByUuid(String uuid);
 
-    Optional<Booking> findByBookingReference(String bookingReference);
-
-    List<Booking> findByUserId(String userId);
-
-    List<Booking> findByShowUuid(String showUuid);
-
-    List<Booking> findByUserIdAndStatus(String userId, Booking.BookingStatus status);
-
-    List<Booking> findByStatus(Booking.BookingStatus status);
-
     @Query("SELECT b FROM Booking b WHERE b.userId = :userId AND b.createdAt >= :startDate ORDER BY b.createdAt DESC")
     List<Booking> findRecentBookingsByUser(@Param("userId") String userId, @Param("startDate") LocalDateTime startDate);
 

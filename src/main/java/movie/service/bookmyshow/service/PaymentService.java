@@ -17,12 +17,4 @@ public class PaymentService {
     public PaymentResult processPayment(PaymentRequest request) {
         return paymentGateway.processPayment(request);
     }
-
-    public PaymentResult refundPayment(String paymentId, BigDecimal amount) {
-        return paymentGateway.refundPayment(paymentId, amount);
-    }
-
-    public PaymentResult verifyPayment(String paymentId) {
-        return paymentGateway.verifyPayment(paymentId);
-    }
 }

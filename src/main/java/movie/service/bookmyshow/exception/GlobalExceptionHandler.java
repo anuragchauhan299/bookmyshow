@@ -38,6 +38,16 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(OfferNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOfferNotFoundException(OfferNotFoundException ex) {
+        log.error("Offer not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        ));
+    }
+
     @ExceptionHandler(SeatNotAvailableException.class)
     public ResponseEntity<ErrorResponse> handleSeatNotAvailableException(SeatNotAvailableException ex) {
         log.error("Seat not available: {}", ex.getMessage());

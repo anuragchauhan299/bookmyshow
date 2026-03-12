@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -33,33 +32,6 @@ public class TheatreIntegrationService {
         }
         
         return theatreRepository.save(theatre);
-    }
-
-    @Transactional
-    public Show createShowForTheatre(Long theatreId, Show show) {
-        log.info("Creating show for theatre ID: {}", theatreId);
-        
-        Theatre theatre = theatreRepository.findById(theatreId)
-                .orElseThrow(() -> new IllegalArgumentException("Theatre not found"));
-        
-        if (!theatre.getActive()) {
-            throw new IllegalArgumentException("Theatre is not active");
-        }
-        
-        show.setTheatre(theatre);
-        show.setCity(theatre.getCity());
-        show.setUuid(UUID.randomUUID().toString());
-        show.setStatus(Show.ShowStatus.ACTIVE);
-        
-        Show savedShow = showRepository.save(show);
-        
-        if (theatre.getIntegrationType() == Theatre.IntegrationType.NEW) {
-            syncShowToTheatre(theatre, savedShow);
-        } else {
-            pushShowToLegacySystem(theatre, savedShow);
-        }
-        
-        return savedShow;
     }
 
     @Transactional
@@ -101,30 +73,6 @@ public class TheatreIntegrationService {
         log.info("Created {} seats for show {}", seats.size(), showUuid);
     }
 
-    public void syncShowToTheatre(Theatre theatre, Show show) {
-        log.info("Syncing show {} to new theatre {}", show.getId(), theatre.getName());
-        
-        if (theatre.getIntegrationEndpoint() != null) {
-            try {
-                // Integration logic for new theatres with API endpoint
-                log.debug("Would sync to endpoint: {}", theatre.getIntegrationEndpoint());
-            } catch (Exception e) {
-                log.error("Failed to sync show to theatre: {}", e.getMessage());
-            }
-        }
-    }
-
-    public void pushShowToLegacySystem(Theatre theatre, Show show) {
-        log.info("Pushing show {} to legacy theatre system for {}", show.getId(), theatre.getName());
-        
-        switch (theatre.getIntegrationType()) {
-            case LEGACY_REST -> pushViaRest(theatre, show);
-            case LEGACY_SOAP -> pushViaSoap(theatre, show);
-            case LEGACY_FILE -> generateFileFeed(theatre, show);
-            default -> log.warn("Unknown integration type: {}", theatre.getIntegrationType());
-        }
-    }
-
     private void pushViaRest(Theatre theatre, Show show) {
         log.debug("Pushing via REST to theatre: {}", theatre.getName());
     }
@@ -137,40 +85,7 @@ public class TheatreIntegrationService {
         log.debug("Generating file feed for theatre: {}", theatre.getName());
     }
 
-    public void syncBookingToTheatre(Booking booking) {
-        Theatre theatre = booking.getShow().getTheatre();
-        
-        if (theatre.getIntegrationType() == Theatre.IntegrationType.NEW) {
-            syncShowToTheatre(theatre, booking.getShow());
-        } else {
-            pushBookingToLegacySystem(theatre, booking);
-        }
-    }
-
-    private void pushBookingToLegacySystem(Theatre theatre, Booking booking) {
-        log.info("Pushing booking {} to legacy system for theatre {}", 
-                booking.getBookingReference(), theatre.getName());
-    }
-
     public List<Theatre> getTheatresByCity(String city) {
         return theatreRepository.findByCityAndActive(city, true);
-    }
-
-    public List<Show> getShowsForTheatre(Long theatreId, LocalDate date) {
-        return showRepository.findByTheatreIdAndShowDate(theatreId, date);
-    }
-
-    public Map<String, Object> getTheatreStatus(Long theatreId) {
-        Theatre theatre = theatreRepository.findById(theatreId)
-                .orElseThrow(() -> new IllegalArgumentException("Theatre not found"));
-        
-        Map<String, Object> status = new HashMap<>();
-        status.put("theatreId", theatreId);
-        status.put("theatreName", theatre.getName());
-        status.put("integrationType", theatre.getIntegrationType());
-        status.put("active", theatre.getActive());
-        status.put("screenCount", theatre.getScreenCount());
-        
-        return status;
     }
 }
