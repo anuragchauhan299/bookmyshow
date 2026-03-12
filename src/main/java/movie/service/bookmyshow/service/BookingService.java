@@ -1,22 +1,28 @@
 package movie.service.bookmyshow.service;
 
-import movie.service.bookmyshow.constant.AppConstants;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import movie.service.bookmyshow.config.BookMyShowProperties;
-import movie.service.bookmyshow.entity.*;
+import movie.service.bookmyshow.constant.AppConstants;
+import movie.service.bookmyshow.entity.Booking;
+import movie.service.bookmyshow.entity.Offer;
+import movie.service.bookmyshow.entity.Seat;
+import movie.service.bookmyshow.entity.Show;
 import movie.service.bookmyshow.exception.BookingException;
 import movie.service.bookmyshow.exception.SeatNotAvailableException;
 import movie.service.bookmyshow.exception.ShowNotFoundException;
-import movie.service.bookmyshow.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import movie.service.bookmyshow.repository.BookingRepository;
+import movie.service.bookmyshow.repository.OfferRepository;
+import movie.service.bookmyshow.repository.SeatRepository;
+import movie.service.bookmyshow.repository.ShowRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -235,5 +241,6 @@ public class BookingService {
             BigDecimal gstAmount,
             BigDecimal totalPrice,
             List<String> appliedOffers
-    ) {}
+    ) {
+    }
 }

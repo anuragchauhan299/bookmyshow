@@ -1,9 +1,9 @@
 package movie.service.bookmyshow.controller;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.dto.OfferDto;
 import movie.service.bookmyshow.entity.Offer;
 import movie.service.bookmyshow.service.OfferService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

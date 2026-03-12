@@ -2,14 +2,15 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "audit_logs", indexes = {
-    @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id"),
-    @Index(name = "idx_audit_user", columnList = "user_id"),
-    @Index(name = "idx_audit_action", columnList = "action"),
-    @Index(name = "idx_audit_timestamp", columnList = "timestamp")
+        @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id"),
+        @Index(name = "idx_audit_user", columnList = "user_id"),
+        @Index(name = "idx_audit_action", columnList = "action"),
+        @Index(name = "idx_audit_timestamp", columnList = "timestamp")
 })
 @Getter
 @Setter

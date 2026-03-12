@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String userId = jwtTokenProvider.getUserIdFromToken(jwt);
                 String role = jwtTokenProvider.getRoleFromToken(jwt);
 
-                UsernamePasswordAuthenticationToken authentication = 
+                UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId,
                                 null,

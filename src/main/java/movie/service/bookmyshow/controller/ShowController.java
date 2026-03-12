@@ -1,5 +1,6 @@
 package movie.service.bookmyshow.controller;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.dto.ShowDto;
 import movie.service.bookmyshow.entity.Movie;
 import movie.service.bookmyshow.entity.Show;
@@ -7,7 +8,6 @@ import movie.service.bookmyshow.entity.Theatre;
 import movie.service.bookmyshow.repository.MovieRepository;
 import movie.service.bookmyshow.repository.TheatreRepository;
 import movie.service.bookmyshow.service.ShowService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +26,8 @@ public class ShowController {
 
     @GetMapping
     public List<Show> getShows(@RequestParam(required = false) String movieTitle,
-                                @RequestParam(required = false) String city,
-                                @RequestParam(required = false) LocalDate date) {
+                               @RequestParam(required = false) String city,
+                               @RequestParam(required = false) LocalDate date) {
         return showService.findShows(movieTitle, city, date);
     }
 
@@ -37,7 +37,7 @@ public class ShowController {
                 .orElseThrow(() -> new IllegalArgumentException("Movie not found"));
         Theatre theatre = theatreRepository.findById(dto.getTheatreId())
                 .orElseThrow(() -> new IllegalArgumentException("Theatre not found"));
-        
+
         Show show = Show.builder()
                 .movie(movie)
                 .theatre(theatre)
@@ -46,7 +46,7 @@ public class ShowController {
                 .showTime(dto.getShowTime())
                 .ticketPrice(dto.getTicketPrice())
                 .build();
-        
+
         Show created = showService.createShow(show);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

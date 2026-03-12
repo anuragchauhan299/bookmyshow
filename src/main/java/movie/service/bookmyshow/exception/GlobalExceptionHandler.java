@@ -66,12 +66,12 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
         response.put("timestamp", LocalDateTime.now());
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 

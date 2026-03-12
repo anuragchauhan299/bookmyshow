@@ -18,7 +18,7 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
     List<Offer> findByIsActiveTrue();
 
     @Query("SELECT o FROM Offer o WHERE o.isActive = true AND o.startDate <= :now AND o.endDate >= :now AND " +
-           "(:city IS NULL OR :city MEMBER OF o.applicableCities) AND " +
-           "(:theatre IS NULL OR :theatre MEMBER OF o.applicableTheatres)")
+            "(:city IS NULL OR :city MEMBER OF o.applicableCities) AND " +
+            "(:theatre IS NULL OR :theatre MEMBER OF o.applicableTheatres)")
     List<Offer> findApplicableOffers(@Param("now") LocalDateTime now, @Param("city") String city, @Param("theatre") String theatre);
 }

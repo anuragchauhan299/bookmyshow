@@ -1,6 +1,7 @@
 # BookMyShow Platform - Architecture Design Document
 
 ## Table of Contents
+
 1. [Functional Requirements Implementation](#1-functional-requirements-implementation)
 2. [Transactional Scenarios & Design Decisions](#2-transactional-scenarios--design-decisions)
 3. [Theatre Integration Architecture](#3-theatre-integration-architecture)
@@ -16,29 +17,30 @@
 
 ### 1.1 Read Scenarios (Browse & Search)
 
-| Feature | Endpoint | Implementation |
-|---------|----------|----------------|
-| Browse theatres by city | `GET /api/theatres?city={city}` | TheatreController |
-| Shows by movie, city, date | `GET /api/shows?movieTitle=&city=&date=` | ShowController |
-| Show timings for theatre | `GET /api/shows?theatreId=&date=` | ShowService |
-| Available seats | `GET /api/shows/{showId}/seats` | SeatController |
-| Active offers | `GET /api/offers?activeOnly=true` | OfferController |
+| Feature                    | Endpoint                                 | Implementation    |
+|----------------------------|------------------------------------------|-------------------|
+| Browse theatres by city    | `GET /api/theatres?city={city}`          | TheatreController |
+| Shows by movie, city, date | `GET /api/shows?movieTitle=&city=&date=` | ShowController    |
+| Show timings for theatre   | `GET /api/shows?theatreId=&date=`        | ShowService       |
+| Available seats            | `GET /api/shows/{showId}/seats`          | SeatController    |
+| Active offers              | `GET /api/offers?activeOnly=true`        | OfferController   |
 
 ### 1.2 Write Scenarios (Booking & Management)
 
-| Feature | Endpoint | Implementation |
-|---------|----------|----------------|
-| Book tickets | `POST /api/bookings` | BookingController |
-| Confirm booking (payment) | `POST /api/bookings/{id}/confirm` | BookingController |
-| Cancel booking | `POST /api/bookings/{id}/cancel` | BookingController |
-| Bulk booking | `POST /api/bookings/bulk` | BookingController |
-| Bulk cancellation | `POST /api/bookings/cancel-bulk` | BookingController |
-| Create/Update/Delete shows | `POST/PUT/DELETE /api/shows` | ShowController |
-| Seat inventory allocation | `POST /api/shows/{showId}/seats` | SeatController |
+| Feature                    | Endpoint                          | Implementation    |
+|----------------------------|-----------------------------------|-------------------|
+| Book tickets               | `POST /api/bookings`              | BookingController |
+| Confirm booking (payment)  | `POST /api/bookings/{id}/confirm` | BookingController |
+| Cancel booking             | `POST /api/bookings/{id}/cancel`  | BookingController |
+| Bulk booking               | `POST /api/bookings/bulk`         | BookingController |
+| Bulk cancellation          | `POST /api/bookings/cancel-bulk`  | BookingController |
+| Create/Update/Delete shows | `POST/PUT/DELETE /api/shows`      | ShowController    |
+| Seat inventory allocation  | `POST /api/shows/{showId}/seats`  | SeatController    |
 
 ### 1.3 Offer Implementation
 
 **Configured Offers (via application.yml):**
+
 ```yaml
 bookmyshow:
   offers:
@@ -51,6 +53,7 @@ bookmyshow:
 ```
 
 **Database-backed Offers:**
+
 - Create: `POST /api/offers`
 - Update: `PUT /api/offers/{uuid}`
 - Delete: `DELETE /api/offers/{uuid}` (soft delete)
@@ -94,12 +97,12 @@ bookmyshow:
 
 ### 2.2 Transactional Design Decisions
 
-| Scenario | Isolation Level | Strategy |
-|----------|-----------------|----------|
-| Seat Booking | READ_COMMITTED | PESSIMISTIC_WRITE locking |
+| Scenario             | Isolation Level | Strategy                         |
+|----------------------|-----------------|----------------------------------|
+| Seat Booking         | READ_COMMITTED  | PESSIMISTIC_WRITE locking        |
 | Booking Confirmation | REPEATABLE_READ | Optimistic locking with @Version |
-| Payment Processing | REPEATABLE_READ | Saga pattern (compensation) |
-| Bulk Operations | READ_COMMITTED | Individual transactions per item |
+| Payment Processing   | REPEATABLE_READ | Saga pattern (compensation)      |
+| Bulk Operations      | READ_COMMITTED  | Individual transactions per item |
 
 ### 2.3 Concurrency Handling
 
@@ -107,8 +110,8 @@ bookmyshow:
 // Pessimistic Locking for Seat Selection
 @Lock(LockModeType.PESSIMISTIC_WRITE)
 @Query("SELECT s FROM Seat s WHERE s.show.uuid = :showUuid AND s.seatNumber IN :seatNumbers")
-List<Seat> findByShowUuidAndSeatNumbersWithLock(@Param("showUuid") String showUuid, 
-                                                 @Param("seatNumbers") Set<String> seatNumbers);
+List<Seat> findByShowUuidAndSeatNumbersWithLock(@Param("showUuid") String showUuid,
+                                                @Param("seatNumbers") Set<String> seatNumbers);
 
 // Optimistic Locking for Booking
 @Entity
@@ -138,12 +141,12 @@ public class Booking {
 
 ### 3.1 Integration Types Supported
 
-| Type | Protocol | Use Case |
-|------|----------|----------|
-| NEW | REST API | Modern theatres with IT systems |
-| LEGACY_REST | REST (legacy) | Old REST endpoints |
-| LEGACY_SOAP | SOAP | Old SOAP-based systems |
-| LEGACY_FILE | File (CSV/XML) | Batch file processing |
+| Type        | Protocol       | Use Case                        |
+|-------------|----------------|---------------------------------|
+| NEW         | REST API       | Modern theatres with IT systems |
+| LEGACY_REST | REST (legacy)  | Old REST endpoints              |
+| LEGACY_SOAP | SOAP           | Old SOAP-based systems          |
+| LEGACY_FILE | File (CSV/XML) | Batch file processing           |
 
 ### 3.2 Integration Architecture
 
@@ -174,7 +177,9 @@ public class Booking {
 ```java
 public interface TheatreAdapter {
     ShowInventory fetchInventory(String theatreId, LocalDate date);
+
     void updateShow(Show show);
+
     void syncBooking(Booking booking);
 }
 
@@ -188,7 +193,7 @@ public class SoapTheatreAdapter implements TheatreAdapter {
     // For LEGACY_SOAP
 }
 
-@Component  
+@Component
 public class FileTheatreAdapter implements TheatreAdapter {
     // For LEGACY_FILE
 }
@@ -197,6 +202,7 @@ public class FileTheatreAdapter implements TheatreAdapter {
 ### 3.4 Localization Support
 
 ```java
+
 @Configuration
 @ConfigurationProperties(prefix = "bookmyshow.localization")
 public class LocalizationProperties {
@@ -286,24 +292,25 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
 ```
 
 ### 4.3 Availability Calculations
 
-| Component | Availability | Downtime/Year |
-|-----------|--------------|---------------|
-| Single Instance | 99.0% | 87.6 hours |
-| Multi-AZ (3 AZ) | 99.99% | 52.6 minutes |
-| Multi-Region | 99.999% | 5.26 minutes |
-| CDN + Multi-Region | 99.9999% | 31.5 seconds |
+| Component          | Availability | Downtime/Year |
+|--------------------|--------------|---------------|
+| Single Instance    | 99.0%        | 87.6 hours    |
+| Multi-AZ (3 AZ)    | 99.99%       | 52.6 minutes  |
+| Multi-Region       | 99.999%      | 5.26 minutes  |
+| CDN + Multi-Region | 99.9999%     | 31.5 seconds  |
 
 **Achieving 99.99% (53 min/year downtime):**
+
 - Deploy across 3 Availability Zones
 - Use Application Load Balancer with health checks
 - Implement circuit breakers
@@ -317,11 +324,11 @@ spec:
 
 ### 5.1 Supported Payment Gateways
 
-| Gateway | Status | Features |
-|---------|--------|----------|
-| Stripe | ✅ Implemented | Cards, Wallets, UPI |
+| Gateway  | Status        | Features                 |
+|----------|---------------|--------------------------|
+| Stripe   | ✅ Implemented | Cards, Wallets, UPI      |
 | Razorpay | ✅ Implemented | Cards, Wallets, UPI, EMI |
-| Adyen | ✅ Implemented | Global payments |
+| Adyen    | ✅ Implemented | Global payments          |
 
 ### 5.2 Payment Architecture
 
@@ -366,6 +373,7 @@ spec:
 ### 5.3 Payment Flow
 
 ```java
+
 @Service
 public class PaymentService {
     public PaymentResult processPayment(PaymentRequest request) {
@@ -390,13 +398,13 @@ bookmyshow:
     gst-rate: 18                       # 18% GST on booking
 ```
 
-| Revenue Stream | Model | Percentage |
-|---------------|-------|------------|
-| Platform Commission | Per booking | 10% of ticket price |
-| Convenience Fee | Per transaction | ₹20-50 |
-| Advertising | Display ads | Variable |
-| Premium Listings | theatres pay | Monthly subscription |
-| Data Analytics | Insights | Enterprise pricing |
+| Revenue Stream      | Model           | Percentage           |
+|---------------------|-----------------|----------------------|
+| Platform Commission | Per booking     | 10% of ticket price  |
+| Convenience Fee     | Per transaction | ₹20-50               |
+| Advertising         | Display ads     | Variable             |
+| Premium Listings    | theatres pay    | Monthly subscription |
+| Data Analytics      | Insights        | Enterprise pricing   |
 
 ### 6.2 Commission Structure
 
@@ -417,22 +425,23 @@ Platform Earns: ₹50 + convenience fee
 
 ### 7.1 Security Implementation
 
-| OWASP Threat | Mitigation | Implementation |
-|--------------|------------|----------------|
-| **A01: Broken Access Control** | Role-based access, JWT validation | Spring Security + JWT filters |
-| **A02: Cryptographic Failures** | TLS 1.3, AES-256 | SSL/TLS configuration |
-| **A03: Injection** | Input validation, Parameterized queries | Hibernate ORM, input sanitization |
-| **A04: Insecure Design** | Threat modeling, Code review | Security architecture |
-| **A05: Security Misconfiguration** | Hardening, Scan automation | Regular penetration testing |
-| **A06: Vulnerable Components** | Dependency scanning | OWASP Dependency-Check |
-| **A07: Auth Failures** | MFA, Password policies | Spring Security |
-| **A08: Data Integrity Failures** | Digital signatures | Database constraints |
-| **A09: Logging Failures** | Centralized logging | ELK Stack, SIEM integration |
-| **A10: SSRF** | URL validation, Allowlists | Input validation |
+| OWASP Threat                       | Mitigation                              | Implementation                    |
+|------------------------------------|-----------------------------------------|-----------------------------------|
+| **A01: Broken Access Control**     | Role-based access, JWT validation       | Spring Security + JWT filters     |
+| **A02: Cryptographic Failures**    | TLS 1.3, AES-256                        | SSL/TLS configuration             |
+| **A03: Injection**                 | Input validation, Parameterized queries | Hibernate ORM, input sanitization |
+| **A04: Insecure Design**           | Threat modeling, Code review            | Security architecture             |
+| **A05: Security Misconfiguration** | Hardening, Scan automation              | Regular penetration testing       |
+| **A06: Vulnerable Components**     | Dependency scanning                     | OWASP Dependency-Check            |
+| **A07: Auth Failures**             | MFA, Password policies                  | Spring Security                   |
+| **A08: Data Integrity Failures**   | Digital signatures                      | Database constraints              |
+| **A09: Logging Failures**          | Centralized logging                     | ELK Stack, SIEM integration       |
+| **A10: SSRF**                      | URL validation, Allowlists              | Input validation                  |
 
 ### 7.2 JWT Security Implementation
 
 ```java
+
 @Configuration
 @ConfigurationProperties(prefix = "bookmyshow.security")
 public class SecurityProperties {
@@ -451,6 +460,7 @@ public class JwtTokenProvider {
 ### 7.3 Rate Limiting
 
 ```java
+
 @Service
 public class RateLimitingService {
     // Per-user rate limiting
@@ -472,16 +482,17 @@ bookmyshow:
     enable-audit-logging: true    # Full audit trail
 ```
 
-| Compliance | Implementation |
-|------------|----------------|
-| **GDPR** | Data retention policies, Right to erasure |
-| **PCI-DSS** | Tokenization, Secure payment handling |
-| **SOC 2** | Audit logging, Access controls |
-| **Data Privacy** | Encryption at rest, Anonymization |
+| Compliance       | Implementation                            |
+|------------------|-------------------------------------------|
+| **GDPR**         | Data retention policies, Right to erasure |
+| **PCI-DSS**      | Tokenization, Secure payment handling     |
+| **SOC 2**        | Audit logging, Access controls            |
+| **Data Privacy** | Encryption at rest, Anonymization         |
 
 ### 8.2 Audit Logging
 
 ```java
+
 @Service
 public class AuditService {
     @EventListener
@@ -515,14 +526,14 @@ public class AuditService {
 
 ## Summary
 
-| Category | Implementation |
-|----------|----------------|
-| **Functional** | ✅ Booking, Shows, Theatres, Offers, Bulk operations |
+| Category          | Implementation                                          |
+|-------------------|---------------------------------------------------------|
+| **Functional**    | ✅ Booking, Shows, Theatres, Offers, Bulk operations     |
 | **Transactional** | ✅ Pessimistic locking, Optimistic locking, Saga pattern |
-| **Integration** | ✅ REST, SOAP, File-based adapters |
-| **Scaling** | ✅ Multi-AZ, Auto-scaling, Global DB |
-| **Availability** | ✅ 99.99% target |
-| **Payments** | ✅ Stripe, Razorpay, Adyen |
-| **Monetization** | ✅ 10% commission, GST handling |
-| **Security** | ✅ JWT, Rate limiting, OWASP compliance |
-| **Compliance** | ✅ GDPR, Audit logging, Data retention |
+| **Integration**   | ✅ REST, SOAP, File-based adapters                       |
+| **Scaling**       | ✅ Multi-AZ, Auto-scaling, Global DB                     |
+| **Availability**  | ✅ 99.99% target                                         |
+| **Payments**      | ✅ Stripe, Razorpay, Adyen                               |
+| **Monetization**  | ✅ 10% commission, GST handling                          |
+| **Security**      | ✅ JWT, Rate limiting, OWASP compliance                  |
+| **Compliance**    | ✅ GDPR, Audit logging, Data retention                   |

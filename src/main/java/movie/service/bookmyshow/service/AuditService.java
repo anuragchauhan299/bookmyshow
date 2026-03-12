@@ -1,16 +1,14 @@
 package movie.service.bookmyshow.service;
 
-import movie.service.bookmyshow.constant.AppConstants;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import movie.service.bookmyshow.config.BookMyShowProperties;
 import movie.service.bookmyshow.entity.AuditLog;
 import movie.service.bookmyshow.repository.AuditLogRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,7 +20,7 @@ public class AuditService {
     private final BookMyShowProperties properties;
 
     @Transactional
-    public void logAction(String entityType, String entityId, String action, String userId, 
+    public void logAction(String entityType, String entityId, String action, String userId,
                           String userEmail, String oldValue, String newValue, String description) {
         if (!properties.getCompliance().isEnableAuditLogging()) {
             return;

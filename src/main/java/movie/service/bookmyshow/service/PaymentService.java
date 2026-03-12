@@ -1,12 +1,10 @@
 package movie.service.bookmyshow.service;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.paymentgateway.PaymentGateway;
 import movie.service.bookmyshow.paymentgateway.PaymentRequest;
 import movie.service.bookmyshow.paymentgateway.PaymentResult;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

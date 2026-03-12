@@ -1,9 +1,9 @@
 package movie.service.bookmyshow.config;
 
-import movie.service.bookmyshow.entity.*;
-import movie.service.bookmyshow.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import movie.service.bookmyshow.entity.*;
+import movie.service.bookmyshow.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -135,7 +135,7 @@ public class DataLoader implements CommandLineRunner {
     private void loadShows() {
         List<Theatre> theatres = theatreRepository.findAll();
         List<Movie> movies = movieRepository.findAll();
-        
+
         if (theatres.isEmpty() || movies.isEmpty()) {
             return;
         }

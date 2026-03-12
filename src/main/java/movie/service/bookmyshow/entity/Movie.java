@@ -2,6 +2,7 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,8 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "movies", indexes = {
-    @Index(name = "idx_movie_title", columnList = "title"),
-    @Index(name = "idx_movie_release_date", columnList = "release_date")
+        @Index(name = "idx_movie_title", columnList = "title"),
+        @Index(name = "idx_movie_release_date", columnList = "release_date")
 })
 @Getter
 @Setter

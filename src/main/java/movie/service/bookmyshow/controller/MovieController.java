@@ -1,9 +1,12 @@
 package movie.service.bookmyshow.controller;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.entity.Movie;
 import movie.service.bookmyshow.service.LocalizationService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -16,7 +19,7 @@ public class MovieController {
 
     @GetMapping
     public List<Movie> getMovies(@RequestParam(required = false) String city,
-                                  @RequestParam(required = false, defaultValue = "en-US") String locale) {
+                                 @RequestParam(required = false, defaultValue = "en-US") String locale) {
         if (city != null) {
             return localizationService.getMoviesNowShowingInCity(city, locale);
         }

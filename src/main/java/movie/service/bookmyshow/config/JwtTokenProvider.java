@@ -43,7 +43,7 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        
+
         return claims.getSubject();
     }
 
@@ -53,7 +53,7 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        
+
         return claims.get("role", String.class);
     }
 

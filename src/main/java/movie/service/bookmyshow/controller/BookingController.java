@@ -1,11 +1,12 @@
 package movie.service.bookmyshow.controller;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.dto.*;
 import movie.service.bookmyshow.entity.Booking;
 import movie.service.bookmyshow.paymentgateway.PaymentRequest;
 import movie.service.bookmyshow.paymentgateway.PaymentResult;
-import movie.service.bookmyshow.service.*;
-import lombok.RequiredArgsConstructor;
+import movie.service.bookmyshow.service.BookingService;
+import movie.service.bookmyshow.service.PaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

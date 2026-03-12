@@ -3,6 +3,7 @@
 ## 1. Transactional Scenarios and Design Decisions
 
 ### 1.1 Seat Reservation Transaction
+
 ```
 Scenario: User selects seats and books tickets
 -------------------------------------------------------------
@@ -35,14 +36,15 @@ Scenario: User selects seats and books tickets
 
 ### 1.2 Design Decisions
 
-| Scenario | Decision | Rationale |
-|----------|----------|-----------|
-| Seat Locking | Pessimistic Locking (SELECT FOR UPDATE) | Prevents double booking at DB level |
-| Booking Confirmation | Two-phase (PENDING → CONFIRMED) | Allows payment integration, prevents stock manipulation |
-| Concurrent Bookings | Serializable isolation per show | Ensures consistency under high load |
-| Seat Hold | 5-minute expiry with timestamp | Balances user experience vs inventory locking |
+| Scenario             | Decision                                | Rationale                                               |
+|----------------------|-----------------------------------------|---------------------------------------------------------|
+| Seat Locking         | Pessimistic Locking (SELECT FOR UPDATE) | Prevents double booking at DB level                     |
+| Booking Confirmation | Two-phase (PENDING → CONFIRMED)         | Allows payment integration, prevents stock manipulation |
+| Concurrent Bookings  | Serializable isolation per show         | Ensures consistency under high load                     |
+| Seat Hold            | 5-minute expiry with timestamp          | Balances user experience vs inventory locking           |
 
 ### 1.3 Transaction Boundaries
+
 - **Single Booking**: Atomic - all seats succeed or fail together
 - **Bulk Booking**: Best-effort partial success (individual seat-level transactions)
 - **Payment Failure**: Automatic rollback with seat release
@@ -52,6 +54,7 @@ Scenario: User selects seats and books tickets
 ## 2. Theatre Integration (Legacy + New)
 
 ### 2.1 Integration Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    BookMyShow Platform                    │
@@ -66,26 +69,28 @@ Scenario: User selects seats and books tickets
 
 ### 2.2 Supported Integration Types
 
-| Type | Use Case | Implementation |
-|------|----------|----------------|
-| NEW | Modern theatres with API | Direct REST sync |
+| Type        | Use Case                          | Implementation           |
+|-------------|-----------------------------------|--------------------------|
+| NEW         | Modern theatres with API          | Direct REST sync         |
 | LEGACY_REST | Older systems with REST endpoints | Adapter with retry logic |
-| LEGACY_SOAP | Traditional POS systems | SOAP client wrapper |
-| LEGACY_FILE | Mainframe/batch systems | CSV/XML file generation |
+| LEGACY_SOAP | Traditional POS systems           | SOAP client wrapper      |
+| LEGACY_FILE | Mainframe/batch systems           | CSV/XML file generation  |
 
 ### 2.3 Localization (Movies)
+
 - **Movie Metadata**: Stored with multiple locales (en-US, hi-IN, ta-IN, etc.)
 - **Localized Titles/Descriptions**: Map<String, String> per movie
-- **City-based Localization**: 
-  - Timezone-aware show times
-  - Currency per city (INR, USD, etc.)
-  - Language preference per region
+- **City-based Localization**:
+    - Timezone-aware show times
+    - Currency per city (INR, USD, etc.)
+    - Language preference per region
 
 ---
 
 ## 3. Scaling & Availability (99.99%)
 
 ### 3.1 Multi-City/Multi-Country Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Global Load Balancer                  │
@@ -112,15 +117,16 @@ Scenario: User selects seats and books tickets
 
 ### 3.2 Availability Targets
 
-| Component | Strategy | Availability |
-|-----------|----------|--------------|
-| Application | Auto-scaling K8s (2-10 pods) | 99.99% |
-| Database | Multi-AZ PostgreSQL | 99.99% |
-| Cache | Redis Cluster (Multi-AZ) | 99.99% |
-| Payment Gateway | Circuit breaker + retry | 99.9% |
-| Theatre Integration | Per-theatre isolation | 99.5% |
+| Component           | Strategy                     | Availability |
+|---------------------|------------------------------|--------------|
+| Application         | Auto-scaling K8s (2-10 pods) | 99.99%       |
+| Database            | Multi-AZ PostgreSQL          | 99.99%       |
+| Cache               | Redis Cluster (Multi-AZ)     | 99.99%       |
+| Payment Gateway     | Circuit breaker + retry      | 99.9%        |
+| Theatre Integration | Per-theatre isolation        | 99.5%        |
 
 ### 3.3 Scaling Configuration
+
 ```yaml
 bookmyshow:
   scaling:
@@ -137,6 +143,7 @@ spring:
 ```
 
 ### 3.4 High Availability Features
+
 - **Health Checks**: `/actuator/health` for load balancer
 - **Graceful Degradation**: Per-theatre isolation prevents cascade failures
 - **Circuit Breaker**: Payment gateway failures don't crash the platform
@@ -147,11 +154,13 @@ spring:
 ## 4. Payment Gateway Integration
 
 ### 4.1 Supported Gateways
+
 - **Stripe** - International cards, wallets
 - **Razorpay** - India-focused (UPI, cards, net banking)
 - **Adyen** - Global enterprise
 
 ### 4.2 Payment Flow
+
 ```
 User → Booking Created (PENDING)
     → Redirect to Payment Gateway
@@ -161,6 +170,7 @@ User → Booking Created (PENDING)
 ```
 
 ### 4.3 Security
+
 - **Tokenization**: No card data touches our servers
 - **PCI-DSS**: Hosted payment pages
 - **Idempotency**: Prevent duplicate charges
@@ -170,6 +180,7 @@ User → Booking Created (PENDING)
 ## 5. Monetization
 
 ### 5.1 Revenue Model
+
 ```
 ┌─────────────────────────────────────────┐
 │           Booking Total                  │
@@ -190,6 +201,7 @@ User → Booking Created (PENDING)
 ```
 
 ### 5.2 Commission Configuration
+
 ```yaml
 bookmyshow:
   monetization:
@@ -203,20 +215,21 @@ bookmyshow:
 
 ### 6.1 Security Implementation
 
-| OWASP Risk | Protection |
-|------------|------------|
-| A01:2021 - Broken Access Control | JWT validation, role-based endpoints |
-| A02:2021 - Cryptographic Failures | AES-256 at rest, TLS 1.3 in transit |
-| A03:2021 - Injection | Parameterized queries (JPA), input validation |
-| A04:2021 - Insecure Design | Rate limiting, circuit breakers |
-| A05:2021 - Security Misconfiguration | Hardened baselines, secret rotation |
-| A06:2021 - Vulnerable Components | Dependency scanning, CVE monitoring |
-| A07:2021 - Auth Failures | JWT expiry, account lockout |
-| A08:2021 - Data Failures | Encryption, PII masking |
-| A09:2021 - Logging Failures | Structured logs, correlation IDs |
-| A10:2021 - SSRF | Allowlist, sanitized URLs |
+| OWASP Risk                           | Protection                                    |
+|--------------------------------------|-----------------------------------------------|
+| A01:2021 - Broken Access Control     | JWT validation, role-based endpoints          |
+| A02:2021 - Cryptographic Failures    | AES-256 at rest, TLS 1.3 in transit           |
+| A03:2021 - Injection                 | Parameterized queries (JPA), input validation |
+| A04:2021 - Insecure Design           | Rate limiting, circuit breakers               |
+| A05:2021 - Security Misconfiguration | Hardened baselines, secret rotation           |
+| A06:2021 - Vulnerable Components     | Dependency scanning, CVE monitoring           |
+| A07:2021 - Auth Failures             | JWT expiry, account lockout                   |
+| A08:2021 - Data Failures             | Encryption, PII masking                       |
+| A09:2021 - Logging Failures          | Structured logs, correlation IDs              |
+| A10:2021 - SSRF                      | Allowlist, sanitized URLs                     |
 
 ### 6.2 Security Configuration
+
 ```yaml
 bookmyshow:
   security:
@@ -232,13 +245,14 @@ bookmyshow:
 
 ### 7.1 Implemented Compliance
 
-| Compliance | Implementation |
-|------------|----------------|
-| **GDPR/CCPA** | Data minimization, consent tracking, right-to-delete |
-| **PCI-DSS** | Tokenized payments via gateway (we don't store cards) |
-| **SOC 2** | Audit logs, encryption, access controls |
+| Compliance    | Implementation                                        |
+|---------------|-------------------------------------------------------|
+| **GDPR/CCPA** | Data minimization, consent tracking, right-to-delete  |
+| **PCI-DSS**   | Tokenized payments via gateway (we don't store cards) |
+| **SOC 2**     | Audit logs, encryption, access controls               |
 
 ### 7.2 Audit Logging
+
 ```yaml
 bookmyshow:
   compliance:
@@ -247,6 +261,7 @@ bookmyshow:
 ```
 
 All bookings, payments, and user actions are logged with:
+
 - Correlation ID
 - User ID/IP
 - Before/After values
@@ -256,21 +271,21 @@ All bookings, payments, and user actions are logged with:
 
 ## 8. API Summary
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/shows` | GET | Browse shows (movie, city, date) |
-| `/api/shows` | POST | Create show |
-| `/api/shows/{id}` | PUT | Update show |
-| `/api/shows/{id}` | DELETE | Cancel show |
-| `/api/shows/{id}/seats` | POST | Initialize seats |
-| `/api/bookings` | POST | Book tickets |
-| `/api/bookings/bulk` | POST | Bulk booking |
-| `/api/bookings/{id}/confirm` | POST | Confirm with payment |
-| `/api/bookings/{id}/cancel` | POST | Cancel booking |
-| `/api/bookings/cancel-bulk` | POST | Bulk cancellation |
-| `/api/cities` | GET | List cities |
-| `/api/movies` | GET | List movies (localized) |
-| `/api/theatres` | GET | List theatres |
+| Endpoint                     | Method | Purpose                          |
+|------------------------------|--------|----------------------------------|
+| `/api/shows`                 | GET    | Browse shows (movie, city, date) |
+| `/api/shows`                 | POST   | Create show                      |
+| `/api/shows/{id}`            | PUT    | Update show                      |
+| `/api/shows/{id}`            | DELETE | Cancel show                      |
+| `/api/shows/{id}/seats`      | POST   | Initialize seats                 |
+| `/api/bookings`              | POST   | Book tickets                     |
+| `/api/bookings/bulk`         | POST   | Bulk booking                     |
+| `/api/bookings/{id}/confirm` | POST   | Confirm with payment             |
+| `/api/bookings/{id}/cancel`  | POST   | Cancel booking                   |
+| `/api/bookings/cancel-bulk`  | POST   | Bulk cancellation                |
+| `/api/cities`                | GET    | List cities                      |
+| `/api/movies`                | GET    | List movies (localized)          |
+| `/api/theatres`              | GET    | List theatres                    |
 
 ---
 

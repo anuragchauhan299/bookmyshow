@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), 
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 

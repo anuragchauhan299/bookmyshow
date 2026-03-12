@@ -2,13 +2,14 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "theatres", indexes = {
-    @Index(name = "idx_theatre_city", columnList = "city"),
-    @Index(name = "idx_theatre_name", columnList = "name")
+        @Index(name = "idx_theatre_city", columnList = "city"),
+        @Index(name = "idx_theatre_name", columnList = "name")
 })
 @Getter
 @Setter

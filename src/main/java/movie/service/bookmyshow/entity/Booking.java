@@ -2,19 +2,18 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "bookings", indexes = {
-    @Index(name = "idx_booking_show", columnList = "show_id"),
-    @Index(name = "idx_booking_user", columnList = "user_id"),
-    @Index(name = "idx_booking_status", columnList = "status"),
-    @Index(name = "idx_booking_created", columnList = "created_at")
+        @Index(name = "idx_booking_show", columnList = "show_id"),
+        @Index(name = "idx_booking_user", columnList = "user_id"),
+        @Index(name = "idx_booking_status", columnList = "status"),
+        @Index(name = "idx_booking_created", columnList = "created_at")
 })
 @Getter
 @Setter

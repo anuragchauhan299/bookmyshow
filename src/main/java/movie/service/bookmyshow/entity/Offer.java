@@ -2,6 +2,7 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -9,9 +10,9 @@ import java.util.Set;
 
 @Entity
 @Table(name = "offers", indexes = {
-    @Index(name = "idx_offer_code", columnList = "code", unique = true),
-    @Index(name = "idx_offer_type", columnList = "type"),
-    @Index(name = "idx_offer_active", columnList = "is_active")
+        @Index(name = "idx_offer_code", columnList = "code", unique = true),
+        @Index(name = "idx_offer_type", columnList = "type"),
+        @Index(name = "idx_offer_active", columnList = "is_active")
 })
 @Getter
 @Setter

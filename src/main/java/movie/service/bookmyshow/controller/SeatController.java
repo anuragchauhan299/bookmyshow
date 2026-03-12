@@ -1,10 +1,10 @@
 package movie.service.bookmyshow.controller;
 
+import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.dto.SeatInventoryDto;
 import movie.service.bookmyshow.entity.Seat;
 import movie.service.bookmyshow.service.BookingService;
 import movie.service.bookmyshow.service.TheatreIntegrationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

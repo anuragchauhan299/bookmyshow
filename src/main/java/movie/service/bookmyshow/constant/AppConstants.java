@@ -2,6 +2,9 @@ package movie.service.bookmyshow.constant;
 
 public final class AppConstants {
 
+    private AppConstants() {
+    }
+
     public static final class ErrorMessage {
         public static final String SHOW_NOT_FOUND = "Show not found: ";
         public static final String BOOKING_NOT_FOUND = "Booking not found: ";
@@ -40,8 +43,5 @@ public final class AppConstants {
         public static final String ID_PREFIX_RAZORPAY = "razorpay_";
         public static final String ID_PREFIX_STRIPE = "stripe_";
         public static final String ID_PREFIX_REFUND = "refund_";
-    }
-
-    private AppConstants() {
     }
 }

@@ -2,14 +2,15 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "cities", indexes = {
-    @Index(name = "idx_city_name", columnList = "name"),
-    @Index(name = "idx_city_country", columnList = "country")
+        @Index(name = "idx_city_name", columnList = "name"),
+        @Index(name = "idx_city_country", columnList = "country")
 })
 @Getter
 @Setter

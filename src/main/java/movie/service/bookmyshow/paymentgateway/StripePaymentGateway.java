@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import movie.service.bookmyshow.constant.AppConstants;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j

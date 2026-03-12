@@ -2,6 +2,7 @@ package movie.service.bookmyshow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -10,8 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "shows", indexes = {
-    @Index(name = "idx_show_city_date", columnList = "city, show_date"),
-    @Index(name = "idx_show_theatre", columnList = "theatre_id")
+        @Index(name = "idx_show_city_date", columnList = "city, show_date"),
+        @Index(name = "idx_show_theatre", columnList = "theatre_id")
 })
 @Getter
 @Setter
