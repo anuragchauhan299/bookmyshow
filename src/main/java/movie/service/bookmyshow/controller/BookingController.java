@@ -95,6 +95,40 @@ public class BookingController {
         return ResponseEntity.ok(booking);
     }
 
+    @PostMapping("/bookings/bulk")
+    public List<ResponseEntity<Booking>> bulkBook(@RequestBody BulkBookingRequest request) {
+        return request.bookings().stream()
+                .map(bookingReq -> {
+                    try {
+                        Booking booking = bookingService.createBooking(
+                                bookingReq.showId(),
+                                bookingReq.seats(),
+                                bookingReq.userId(),
+                                bookingReq.userEmail(),
+                                bookingReq.userPhone()
+                        );
+                        return ResponseEntity.status(HttpStatus.CREATED).body(booking);
+                    } catch (Exception e) {
+                        return ResponseEntity.badRequest().<Booking>build();
+                    }
+                })
+                .toList();
+    }
+
+    @PostMapping("/bookings/cancel-bulk")
+    public List<ResponseEntity<Booking>> bulkCancel(@RequestBody BulkCancellationRequest request) {
+        return request.bookingIds().stream()
+                .map(id -> {
+                    try {
+                        Booking booking = bookingService.cancelBooking(id, request.reason());
+                        return ResponseEntity.ok(booking);
+                    } catch (Exception e) {
+                        return ResponseEntity.notFound().<Booking>build();
+                    }
+                })
+                .toList();
+    }
+
     @GetMapping("/bookings/{id}")
     public Booking getBooking(@PathVariable String id) {
         return bookingService.getBooking(id);
@@ -166,4 +200,8 @@ public class BookingController {
     public record TheatreRequest(String name, String address, String city, String state, String country,
                                   Theatre.TheatreType type, Theatre.IntegrationType integrationType,
                                   String integrationEndpoint, Integer screenCount, Integer totalSeats) {}
+
+    public record BulkBookingRequest(List<BookingRequest> bookings) {}
+
+    public record BulkCancellationRequest(List<String> bookingIds, String reason) {}
 }
