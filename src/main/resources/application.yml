@@ -48,6 +48,7 @@ bookmyshow:
     gateway: ${PAYMENT_GATEWAY:stripe}
     timeout-seconds: ${PAYMENT_TIMEOUT:30}
     retry-attempts: ${PAYMENT_RETRY_ATTEMPTS:3}
+    enabled-gateways: ${PAYMENT_ENABLED_GATEWAYS:stripe,razorpay,adyen}
   theatre:
     integration-timeout-ms: ${THEATRE_INTEGRATION_TIMEOUT:10000}
     max-retry-attempts: ${THEATRE_MAX_RETRY:3}
