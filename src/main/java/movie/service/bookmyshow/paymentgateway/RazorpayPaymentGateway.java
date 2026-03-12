@@ -14,13 +14,13 @@ public class RazorpayPaymentGateway implements PaymentGateway {
 
         String paymentId = "razorpay_" + UUID.randomUUID().toString().substring(0, 16);
 
-        return new PaymentResult(
-                true,
-                paymentId,
-                "captured",
-                "Payment successful via Razorpay",
-                "{\"id\":\"" + paymentId + "\",\"status\":\"captured\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(paymentId)
+                .status("captured")
+                .message("Payment successful via Razorpay")
+                .gatewayResponse("{\"id\":\"" + paymentId + "\",\"status\":\"captured\"}")
+                .build();
     }
 
     @Override
@@ -29,25 +29,25 @@ public class RazorpayPaymentGateway implements PaymentGateway {
 
         String refundId = "refund_" + UUID.randomUUID().toString().substring(0, 16);
 
-        return new PaymentResult(
-                true,
-                refundId,
-                "refunded",
-                "Refund processed successfully via Razorpay",
-                "{\"id\":\"" + refundId + "\",\"status\":\"processed\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(refundId)
+                .status("refunded")
+                .message("Refund processed successfully via Razorpay")
+                .gatewayResponse("{\"id\":\"" + refundId + "\",\"status\":\"processed\"}")
+                .build();
     }
 
     @Override
     public PaymentResult verifyPayment(String paymentId) {
         log.info("Verifying Razorpay payment: {}", paymentId);
 
-        return new PaymentResult(
-                true,
-                paymentId,
-                "verified",
-                "Payment verified successfully",
-                "{\"id\":\"" + paymentId + "\",\"status\":\"captured\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(paymentId)
+                .status("verified")
+                .message("Payment verified successfully")
+                .gatewayResponse("{\"id\":\"" + paymentId + "\",\"status\":\"captured\"}")
+                .build();
     }
 }

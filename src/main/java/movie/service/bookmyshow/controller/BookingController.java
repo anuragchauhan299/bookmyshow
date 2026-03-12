@@ -36,14 +36,14 @@ public class BookingController {
     @PostMapping("/{id}/confirm")
     public ResponseEntity<Booking> confirmBooking(@PathVariable String id, @RequestBody PaymentDto dto) {
         PaymentResult result = paymentService.processPayment(
-                new PaymentRequest(
-                        "",
-                        dto.getAmount(),
-                        "INR",
-                        dto.getEmail(),
-                        dto.getPhone(),
-                        Map.of("bookingId", id)
-                )
+                PaymentRequest.builder()
+                        .bookingReference("")
+                        .amount(dto.getAmount())
+                        .currency("INR")
+                        .customerEmail(dto.getEmail())
+                        .customerPhone(dto.getPhone())
+                        .metadata(Map.of("bookingId", id))
+                        .build()
         );
 
         if (result.isSuccess()) {

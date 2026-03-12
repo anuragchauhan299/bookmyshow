@@ -14,13 +14,13 @@ public class AdyenPaymentGateway implements PaymentGateway {
 
         String paymentId = "adyen_" + UUID.randomUUID().toString().substring(0, 16);
 
-        return new PaymentResult(
-                true,
-                paymentId,
-                "captured",
-                "Payment successful via Adyen",
-                "{\"id\":\"" + paymentId + "\",\"resultCode\":\"Authorised\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(paymentId)
+                .status("captured")
+                .message("Payment successful via Adyen")
+                .gatewayResponse("{\"id\":\"" + paymentId + "\",\"resultCode\":\"Authorised\"}")
+                .build();
     }
 
     @Override
@@ -29,25 +29,25 @@ public class AdyenPaymentGateway implements PaymentGateway {
 
         String refundId = "refund_" + UUID.randomUUID().toString().substring(0, 16);
 
-        return new PaymentResult(
-                true,
-                refundId,
-                "refunded",
-                "Refund processed successfully via Adyen",
-                "{\"id\":\"" + refundId + "\",\"resultCode\":\"Refunded\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(refundId)
+                .status("refunded")
+                .message("Refund processed successfully via Adyen")
+                .gatewayResponse("{\"id\":\"" + refundId + "\",\"resultCode\":\"Refunded\"}")
+                .build();
     }
 
     @Override
     public PaymentResult verifyPayment(String paymentId) {
         log.info("Verifying Adyen payment: {}", paymentId);
 
-        return new PaymentResult(
-                true,
-                paymentId,
-                "verified",
-                "Payment verified successfully",
-                "{\"id\":\"" + paymentId + "\",\"resultCode\":\"Authorised\"}"
-        );
+        return PaymentResult.builder()
+                .success(true)
+                .paymentId(paymentId)
+                .status("verified")
+                .message("Payment verified successfully")
+                .gatewayResponse("{\"id\":\"" + paymentId + "\",\"resultCode\":\"Authorised\"}")
+                .build();
     }
 }
